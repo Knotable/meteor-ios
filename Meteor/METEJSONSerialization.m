@@ -73,6 +73,9 @@ NSString * const METEJSONSerializationErrorDomain = @"com.meteor.EJSONSerializat
     
     return array;
   } else {
+    if ([EJSONObject isEqual: [NSNull null]]) {
+        return nil;
+    }
     return EJSONObject;
   }
 }
