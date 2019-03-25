@@ -68,7 +68,18 @@ NSString * const METEJSONSerializationErrorDomain = @"com.meteor.EJSONSerializat
     NSMutableArray *array = [[NSMutableArray alloc] initWithCapacity:[EJSONObject count]];
     
     [EJSONObject enumerateObjectsUsingBlock:^(id item, NSUInteger index, BOOL *stop) {
-      array[index] = [self objectFromEJSONObject:item error:error];
+        
+        @try {
+            array[index] = [self objectFromEJSONObject:item error:error];
+        } @catch (NSException *exception) {
+            
+            if (error) {
+                NSString *message = [NSString stringWithFormat: @"Cannot parse item ar index %lu of arra %@", (unsigned long)index, EJSONObject];
+                *error = [NSError errorWithDomain: METEJSONSerializationErrorDomain code:0 userInfo:@{NSLocalizedDescriptionKey: message}];
+            } else {
+                [ NSException raise: @"Serialization error" format: @"Cannot parse item ar index %lu of arra %@", (unsigned long)index, EJSONObject];
+            }
+        }
     }];
     
     return array;
