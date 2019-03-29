@@ -447,6 +447,7 @@ NSString * const METDDPClientDidChangeAccountNotification = @"METDDPClientDidCha
   
   if (documentID && collectionName) {
     METDocumentKey *documentKey = [METDocumentKey keyWithCollectionName:collectionName documentID:documentID];
+    [fields setValue: documentID forKey: @"id"];
     METDataUpdate *update = [[METDataUpdate alloc] initWithUpdateType:METDataUpdateTypeAdd documentKey:documentKey fields:fields];
     [self processDataUpdate:update];
   }
