@@ -463,6 +463,7 @@ NSString * const METDDPClientDidChangeAccountNotification = @"METDDPClientDidCha
     for (NSString *field in clearedFields) {
       fields[field] = [NSNull null];
     }
+    [fields setValue: documentID forKey: @"id"];
     METDocumentKey *documentKey = [METDocumentKey keyWithCollectionName:collectionName documentID:documentID];
     METDataUpdate *update = [[METDataUpdate alloc] initWithUpdateType:METDataUpdateTypeChange documentKey:documentKey fields:fields];
     [self processDataUpdate:update];
