@@ -6,10 +6,10 @@
 // to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
-// 
+//
 // The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
-// 
+//
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
 // FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -25,6 +25,10 @@ NSString * const METEJSONSerializationErrorDomain = @"com.meteor.EJSONSerializat
 @implementation METEJSONSerialization
 
 + (id)objectFromEJSONObject:(id)EJSONObject error:(NSError **)error {
+  return [METEJSONSerialization objectFromEJSONObject:EJSONObject key:@"root" error:error];
+}
+
++ (id)objectFromEJSONObject:(id)EJSONObject key:(NSString*)fieldName error:(NSError **)error {
   if ([EJSONObject isKindOfClass:[NSDictionary class]]) {
     if ([EJSONObject count] == 1) {
       id key = [[EJSONObject keyEnumerator] nextObject];
@@ -51,7 +55,7 @@ NSString * const METEJSONSerializationErrorDomain = @"com.meteor.EJSONSerializat
         NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] initWithCapacity:[value count]];
         
         for (id escapedKey in value) {
-          dictionary[escapedKey] = [self objectFromEJSONObject:value[escapedKey] error:error];
+          dictionary[escapedKey] = [self objectFromEJSONObject:value[escapedKey] key:[NSString stringWithFormat:@"%@.%@", fieldName, escapedKey] error:error];
         }
         return dictionary;
       }
@@ -59,8 +63,8 @@ NSString * const METEJSONSerializationErrorDomain = @"com.meteor.EJSONSerializat
     
     NSMutableDictionary *dictionary = [[NSMutableDictionary alloc] initWithCapacity:[EJSONObject count]];
     
-    for (id key in EJSONObject) {
-      dictionary[key] = [self objectFromEJSONObject:EJSONObject[key] error:error];
+    for (id keyName in EJSONObject) {
+      dictionary[keyName] = [self objectFromEJSONObject:EJSONObject[keyName] key:[NSString stringWithFormat:@"%@.%@", fieldName, keyName] error:error];
     }
     
     return dictionary;
@@ -68,24 +72,25 @@ NSString * const METEJSONSerializationErrorDomain = @"com.meteor.EJSONSerializat
     NSMutableArray *array = [[NSMutableArray alloc] initWithCapacity:[EJSONObject count]];
     
     [EJSONObject enumerateObjectsUsingBlock:^(id item, NSUInteger index, BOOL *stop) {
+
+      NSString* keyPath = [NSString stringWithFormat:@"%@[%lu]", fieldName, index];
+      @try {
+        array[index] = [self objectFromEJSONObject:item key:keyPath error:error];
+      } @catch (NSException *exception) {
         
-        @try {
-            array[index] = [self objectFromEJSONObject:item error:error];
-        } @catch (NSException *exception) {
-            
-            if (error) {
-                NSString *message = [NSString stringWithFormat: @"Cannot parse item ar index %lu of arra %@", (unsigned long)index, EJSONObject];
-                *error = [NSError errorWithDomain: METEJSONSerializationErrorDomain code:0 userInfo:@{NSLocalizedDescriptionKey: message}];
-            } else {
-                [ NSException raise: @"Serialization error" format: @"Cannot parse item ar index %lu of arra %@", (unsigned long)index, EJSONObject];
-            }
+        if (error) {
+          NSString *message = [NSString stringWithFormat: @"Cannot parse item (%@) of array (%@)", item, keyPath];
+          *error = [NSError errorWithDomain: METEJSONSerializationErrorDomain code:0 userInfo:@{NSLocalizedDescriptionKey: message}];
+        } else {
+          [ NSException raise: @"Serialization error" format: @"Cannot parse item (%@) of array (%@)", item, keyPath];
         }
+      }
     }];
     
     return array;
   } else {
     if ([EJSONObject isEqual: [NSNull null]]) {
-        return nil;
+      return nil;
     }
     return EJSONObject;
   }
