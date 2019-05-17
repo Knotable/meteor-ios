@@ -105,9 +105,9 @@ NSString * const METIncrementalStoreObjectsDidChangeNotification = @"METIncremen
   NSDictionary *values = [self valuesForObjectID:objectID];
   
   if (!values) {
-    if (error) {
-      *error = [self errorWithCode:0 localizedDescription:@"Values for object not found"];
-    }
+//    if (error) {
+//      *error = [self errorWithCode:0 localizedDescription:@"Values for object not found"];
+//    }
     return nil;
   }
   
